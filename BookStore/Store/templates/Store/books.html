@@ -1,0 +1,12 @@
+<h3>All books</h3>
+{% if books %}
+    <div class="padding-top-bottom border-full">
+        <ul>
+            {% for book  in books %}
+                <li>{{book.name}} <img src="{{ book.cover.url }}" width='240'></li>
+            {% endfor %}
+        </ul>
+    </div>
+{% else %}
+    <strong>There are no trucks to list.</strong>
+{% endif %}

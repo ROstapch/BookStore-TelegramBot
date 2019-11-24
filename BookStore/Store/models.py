@@ -13,7 +13,7 @@ def year_choices():
 
 class Author(models.Model):
 	name = models.CharField(max_length=200)
-	photo = models.ImageField(upload_to=get_image_path)
+	photo = models.ImageField(upload_to=get_image_path, blank=True)
 	date_of_birth = models.DateField()
 
 	def __str__(self):
