@@ -3,10 +3,14 @@
     <div class="padding-top-bottom border-full">
         <ul>
             {% for book  in books %}
-                <li>{{book.name}} <img src="{{ book.cover.url }}" width='240'></li>
+                <li>{{book.name}}
+                	{% if book.cover %}
+                		<img src="{{ book.cover.url }}" width='240'>
+                	{% endif %}
+                </li>
             {% endfor %}
         </ul>
     </div>
 {% else %}
-    <strong>There are no trucks to list.</strong>
+    <strong>There are no books to list.</strong>
 {% endif %}

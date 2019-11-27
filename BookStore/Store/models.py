@@ -3,11 +3,12 @@ import os
 import datetime
 
 
+
 def get_image_path(instance, filename):
 	return os.path.join('images', str(instance.__class__.__name__), str(instance.name), filename)
 
 def year_choices():
-	return [(year, year) for year in range(0, datetime.date.today().year+1)]
+	return [(year, year) for year in range(1000, datetime.date.today().year+1)]
 
 
 
