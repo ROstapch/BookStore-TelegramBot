@@ -15,10 +15,18 @@ def send_welcome(message):
 	itembtn1 = types.KeyboardButton('Books')
 	itembtn2 = types.KeyboardButton('Authors')
 	itembtn3 = types.KeyboardButton('Publishers')
-	itembtn4 = types.KeyboardButton('test more')
-	markup.add(itembtn1)
+	markup.add(itembtn1, itembtn2, itembtn3)
 	bot.send_message(message.chat.id, "Choose one letter:", reply_markup=markup)
-	#bot.reply_to(message, 'Bot started, type /help to get additional help.')
+	
+
+@bot.message_handler(commands=['help'])
+def send_help(message):
+	markup = types.ReplyKeyboardRemove(selective=False)
+	bot.send_message(message.chat.id,
+		"This message is to help you get along with current bot\nList of all commands:\n\n"+
+		"/start - to start the bot\n"+
+		"/help - to show this hint", reply_markup=markup)
+
 
 bot.polling(none_stop = True)
 
