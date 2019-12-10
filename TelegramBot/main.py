@@ -3,7 +3,6 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from telebot import types
 #from aiohttp import web
 #import ssl
-import requests
 
 from bot_config import *
 from bookstore_api import *
@@ -53,14 +52,9 @@ def callback_query(call):
 
 @bot.message_handler(commands=['books'])
 def list_books(message):
-	books_query = "No books available right now"
-	url = bookstore_endpoints.books
-	resp = requests.get(url=url, params="{'format':'api'}")
-	if (resp):
-		books_query = ''
-	"""	for book in resp.json():
-			books_query = books_query + book.get('name') + ('  (' + str(book.get('year')) + ' year)'if book.get('year') else '')  + '\n'"""
-	bot.send_message(message.chat.id, books_query, reply_markup=query_markup())
+	resp = endpoints.get.books(page=1)
+	resp_parsed = response_parsed(response=resp).books()
+	bot.send_message(message.chat.id, resp_parsed.reply, reply_markup=query_markup())
 
 
 
