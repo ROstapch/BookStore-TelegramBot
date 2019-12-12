@@ -1,8 +1,10 @@
 import requests
 import re
 
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, Dictionaryable
 
-class endpoints:
+
+class Endpoints:
 	__home__ = "http://192.168.10.182:8000/"
 	books_page = __home__ + "api/books/?page="
 	authors_page = __home__ + "api/authors/?page="
@@ -10,62 +12,62 @@ class endpoints:
 
 	class get:
 		def books(page=1):
-			url = endpoints.books_page + str(page)
+			url = Endpoints.books_page + str(page)
 			resp = requests.get(url=url)
 			return (resp)
 		
 		def authors(page=1):
-			url = endpoints.authors_page + str(page)
+			url = Endpoints.authors_page + str(page)
 			resp = requests.get(url=url)
 			return (resp)
 
 		def publishers(page=1):
-			url = endpoints.publishers_page + str(page)
+			url = Endpoints.publishers_page + str(page)
 			resp = requests.get(url=url)
 			return (resp)
 
 
 		def book_id(id=None):
-			url = endpoints.__home__ + "api/books/" + str(page)
+			url = Endpoints.__home__ + "api/books/" + str(page)
 			resp = requests.get(url=url)
 			return (resp)
 		
 		def author_id(id=None):
-			url = endpoints.__home__ + "api/authors/" + str(page)
+			url = Endpoints.__home__ + "api/authors/" + str(page)
 			resp = requests.get(url=url)
 			return (resp)
 			
 		def publisher_id(id=None):
-			url = endpoints.__home__ + "api/publishers/" + str(page)
+			url = Endpoints.__home__ + "api/publishers/" + str(page)
 			resp = requests.get(url=url)
 			return (resp)
 
 
 
-class callback_handle:
+class CallbackHandle:
 	def query(call):
 		message = call.message.text
 		if (re.search(r'Books on page \d+', message)):
 			page = re.search(r'Books on page \d+', message).group().split(' ')[-1]
-			resp = endpoints.get.books(page=page)
-			resp_parsed = response_parsed(response=resp).books()
+			resp = Endpoints.get.books(page=page)
+			resp_parsed = ResponseParsed(response=resp).books()
 			return (resp_parsed)
 
 		elif (re.search(r'Authors on page \d+', message)):
 			page = re.search(r'Authors on page \d+', message).group().split(' ')[-1]
-			resp = endpoints.get.authors(page=page)
-			resp_parsed = response_parsed(response=resp).authors()
+			resp = Endpoints.get.authors(page=page)
+			resp_parsed = ResponseParsed(response=resp).authors()
 			return (resp_parsed)
 
 		elif (re.search(r'Publishers on page \d+', message)):
 			page = re.search(r'Publishers on page \d+', message).group().split(' ')[-1]
-			resp = endpoints.get.publishers(page=page)
-			resp_parsed = response_parsed(response=resp).publishers()
+			resp = Endpoints.get.publishers(page=page)
+			resp_parsed = ResponseParsed(response=resp).publishers()
 			return (resp_parsed)
 
 
 
-class response_parsed:
+class ResponseParsed:
 	def __init__(self, response = None):
 		self.response = response if response else None
 		self.reply = "No items right now"
@@ -122,3 +124,30 @@ class response_parsed:
 					+ str(publisher.get("notes")[:50]) + "...)\n") if publisher.get("notes") else "\n"
 
 
+def go_to_page(page=1, query_type=None):
+	resp_parsed = None
+	if (query_type == "Books"):
+		resp = Endpoints.get.books(page=page)
+		resp_parsed = ResponseParsed(response=resp).books()
+	elif (query_type == "Authors"):
+		resp = Endpoints.get.authors(page=page)
+		resp_parsed = ResponseParsed(response=resp).authors()
+	elif (query_type == "Publishers"):
+		resp = Endpoints.get.publishers(page=page)
+		resp_parsed = ResponseParsed(response=resp).publishers()
+	return (resp_parsed)
+
+
+class KeyboardRow(Dictionaryable):
+	def __init__(self):
+		self.keyboard = []
+
+	def add(self, button):
+		self.keyboard.append(button)
+		
+
+def row(*args):
+	btn_array = []
+	for button in args:
+		btn_array.append(button.to_dic())
+	return(btn_array)
