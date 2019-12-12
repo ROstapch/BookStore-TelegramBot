@@ -33,17 +33,17 @@ def send_help(message):
 
 def query_markup(response=None):
 	markup = InlineKeyboardMarkup()
-	'''if (response and response.ok):
-					temp = ""
-					for i in range(0, response.on_page):
-						if ((i + 1) % 5 == 0):
-							print(temp)
-							print('\n\n\n')
-							markup.row(temp)
-							temp = ""
-						temp = temp + "{'text': " + str(i) + ", 'callback_data': "+ str(i) +"}, "
-			
-				print(markup.row().to_dic())'''
+
+	if (response and response.ok):
+		temp = ""
+		for i in range(0, response.on_page):
+			if ((i + 1) % 5 == 0):
+				markup.row(temp)
+				temp = ""
+			temp = temp + "{'text': " + str(i) + ", 'callback_data': "+ str(i) +"}, "
+
+	#print(markup.row().to_dic())
+
 	markup.row(
 		InlineKeyboardButton("1", callback_data="1"),
 		InlineKeyboardButton("2", callback_data="2"),
@@ -65,7 +65,7 @@ def query_markup(response=None):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
-	print(call.message.text)
+	reply_call = callback_handle.query(call)
 	if call.data == "1":
 		pass
 	if call.data == "2":
@@ -91,20 +91,51 @@ def callback_query(call):
 		bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
 
 	elif call.data == "prev_page":
-		bot.edit_message_text(text="previous", chat_id=call.message.chat.id,
-			message_id=call.message.message_id, inline_message_id=call.inline_message_id,
-			reply_markup=query_markup())
+		if(reply_call.prev_page):
+			resp_parsed = go_to_page(reply_call.prev_page, reply_call.query_type)
+			bot.edit_message_text(text=resp_parsed.reply, chat_id=call.message.chat.id,
+				message_id=call.message.message_id, inline_message_id=call.inline_message_id,
+				reply_markup=query_markup())
 
 	elif call.data == "next_page":
-		bot.edit_message_text(text="next", chat_id=call.message.chat.id,
-			message_id=call.message.message_id, inline_message_id=call.inline_message_id,
-			reply_markup=query_markup())
+		if(reply_call.next_page):
+			resp_parsed = go_to_page(reply_call.next_page, reply_call.query_type)
+			bot.edit_message_text(text=resp_parsed.reply, chat_id=call.message.chat.id,
+				message_id=call.message.message_id, inline_message_id=call.inline_message_id,
+				reply_markup=query_markup())
 
+
+def go_to_page(page=1, query_type=None):
+	resp_parsed = None
+	if (query_type == "Books"):
+		resp = endpoints.get.books(page=page)
+		resp_parsed = response_parsed(response=resp).books()
+	elif (query_type == "Authors"):
+		resp = endpoints.get.authors(page=page)
+		resp_parsed = response_parsed(response=resp).authors()
+	elif (query_type == "Publishers"):
+		resp = endpoints.get.publishers(page=page)
+		resp_parsed = response_parsed(response=resp).publishers()
+	return (resp_parsed)
 
 @bot.message_handler(commands=['books'])
 def list_books(message):
 	resp = endpoints.get.books(page=1)
 	resp_parsed = response_parsed(response=resp).books()
+	bot.send_message(message.chat.id, resp_parsed.reply, reply_markup=query_markup(resp_parsed))
+
+
+@bot.message_handler(commands=['authors'])
+def list_books(message):
+	resp = endpoints.get.authors(page=1)
+	resp_parsed = response_parsed(response=resp).authors()
+	bot.send_message(message.chat.id, resp_parsed.reply, reply_markup=query_markup(resp_parsed))
+
+
+@bot.message_handler(commands=['publishers'])
+def list_books(message):
+	resp = endpoints.get.publishers(page=1)
+	resp_parsed = response_parsed(response=resp).publishers()
 	bot.send_message(message.chat.id, resp_parsed.reply, reply_markup=query_markup(resp_parsed))
 
 

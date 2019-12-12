@@ -42,10 +42,33 @@ class endpoints:
 
 
 
+class callback_handle:
+	def query(call):
+		message = call.message.text
+		if (re.search(r'Books on page \d+', message)):
+			page = re.search(r'Books on page \d+', message).group().split(' ')[-1]
+			resp = endpoints.get.books(page=page)
+			resp_parsed = response_parsed(response=resp).books()
+			return (resp_parsed)
+
+		elif (re.search(r'Authors on page \d+', message)):
+			page = re.search(r'Authors on page \d+', message).group().split(' ')[-1]
+			resp = endpoints.get.authors(page=page)
+			resp_parsed = response_parsed(response=resp).authors()
+			return (resp_parsed)
+
+		elif (re.search(r'Publishers on page \d+', message)):
+			page = re.search(r'Publishers on page \d+', message).group().split(' ')[-1]
+			resp = endpoints.get.publishers(page=page)
+			resp_parsed = response_parsed(response=resp).publishers()
+			return (resp_parsed)
+
+
+
 class response_parsed:
 	def __init__(self, response = None):
 		self.response = response if response else None
-		self.reply = "No books available right now"
+		self.reply = "No items right now"
 		self.ok = True if self.response else False
 		self.query_type = None
 
@@ -67,6 +90,8 @@ class response_parsed:
 			return(self)
 		return (wrapper)
 
+
+
 	@page_header
 	def books(self):
 		if (self.ok and self.data):
@@ -79,10 +104,21 @@ class response_parsed:
 
 	@page_header
 	def authors(self):
-		if (self.response and self.data):
-			pass
+		if (self.ok and self.data):
+			self.query_type = "Authors"
+			self.on_page = len(self.data)
+			self.reply = self.query_type + " on page %s:\n\n" % str(self.current_page)
+			for index, author in enumerate(self.data):
+				self.reply = self.reply + str(index + 1) + ". " + author.get("name") +"\n"
 
 	@page_header
 	def publishers(self):
-		if (self.response and self.data):
-			pass
+		if (self.ok and self.data):
+			self.query_type = "Publishers"
+			self.on_page = len(self.data)
+			self.reply = self.query_type + " on page %s:\n\n" % str(self.current_page)
+			for index, publisher in enumerate(self.data):
+				self.reply = self.reply + str(index + 1) + ". " + publisher.get("name") + (" (" \
+					+ str(publisher.get("notes")[:50]) + "...)\n") if publisher.get("notes") else "\n"
+
+
