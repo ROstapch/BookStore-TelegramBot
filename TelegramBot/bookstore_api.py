@@ -124,7 +124,7 @@ class ResponseParsed:
 					+ str(publisher.get("notes")[:50]) + "...)\n") if publisher.get("notes") else "\n"
 
 
-def go_to_page(page=1, query_type=None):
+def get_page(page=1, query_type=None):
 	resp_parsed = None
 	if (query_type == "Books"):
 		resp = Endpoints.get.books(page=page)
@@ -144,10 +144,4 @@ class KeyboardRow(Dictionaryable):
 
 	def add(self, button):
 		self.keyboard.append(button)
-		
 
-def row(*args):
-	btn_array = []
-	for button in args:
-		btn_array.append(button.to_dic())
-	return(btn_array)
