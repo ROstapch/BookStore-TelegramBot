@@ -1,16 +1,17 @@
 import requests
 import re
 
-from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, Dictionaryable
 
 
 class Endpoints:
+
 	__home__ = "http://192.168.10.182:8000/"
 	books_page = __home__ + "api/books/?page="
 	authors_page = __home__ + "api/authors/?page="
 	publishers_page = __home__ + "api/publishers/?page="
 
 	class get:
+
 		def books(page=1):
 			url = Endpoints.books_page + str(page)
 			resp = requests.get(url=url)
@@ -45,6 +46,7 @@ class Endpoints:
 
 
 class CallbackHandle:
+
 	def query(call):
 		message = call.message.text
 		if (re.search(r'Books on page \d+', message)):
@@ -68,6 +70,7 @@ class CallbackHandle:
 
 
 class ResponseParsed:
+
 	def __init__(self, response = None):
 		self.response = response if response else None
 		self.reply = "No items right now"
@@ -91,7 +94,6 @@ class ResponseParsed:
 				return(self)
 			return(self)
 		return (wrapper)
-
 
 
 	@page_header
@@ -121,7 +123,7 @@ class ResponseParsed:
 			self.reply = self.query_type + " on page %s:\n\n" % str(self.current_page)
 			for index, publisher in enumerate(self.data):
 				self.reply = self.reply + str(index + 1) + ". " + publisher.get("name") + (" (" \
-					+ str(publisher.get("notes")[:50]) + "...)\n") if publisher.get("notes") else "\n"
+					+ str(publisher.get("notes")[:20]) + "...)\n") if publisher.get("notes") else "\n"
 
 
 	def item(self, id_on_page):
@@ -130,7 +132,7 @@ class ResponseParsed:
 			book = self.data[id_on_page]
 			book_id = book.get('id')
 			book_name = book.get('name')
-			book_cover = book.get('cover') if book.get('cover') else 'No cover image'
+			book_cover = book.get('cover') if book.get('cover') else 'No cover image available'
 			book_pages = str(book.get('pages')) if book.get('pages') else 'no info'
 			book_year = str(book.get('year')) if book.get('year') else 'no info'
 
@@ -152,10 +154,24 @@ class ResponseParsed:
 
 			reply = "Book(id_%d):\n\nName: %s\n\nAuthor(s):\n%s\nPublisher(s):\n%s" % (book_id, book_name, book_authors, book_publishers) + \
 			 "\nPublished in %s year\n%s pages\n\nBook cover:\n%s" % (book_year, book_pages, book_cover)
-			return (reply)
 
+		elif (self.ok and self.data and self.query_type == "Authors"):
+			author = self.data[id_on_page]
+			author_id = author.get('id')
+			author_name = author.get('name')
+			author_photo = author.get('photo') if author.get('photo') else 'No photo available'
+			author_birth = str(author.get('date_of_birth')) if author.get('date_of_birth') else 'no info'
 
+			reply = "Author(id_%d):\n\nName: %s\nDate of birth: %s\n\n%s" % (author_id, author_name, author_birth, author_photo)
 
+		elif (self.ok and self.data and self.query_type == "Publishers"):
+			publisher = self.data[id_on_page]
+			publisher_id = publisher.get('id')
+			publisher_name = publisher.get('name')
+			publisher_notes = publisher.get('notes') if publisher.get('notes') else 'No notes'
+
+			reply = "Author(id_%d):\n\nName: %s\nNotes: %s" % (publisher_id, publisher_name, publisher_notes)
+		return (reply)
 
 
 
@@ -171,12 +187,4 @@ def get_page(page=1, query_type=None):
 		resp = Endpoints.get.publishers(page=page)
 		resp_parsed = ResponseParsed(response=resp).publishers()
 	return (resp_parsed)
-
-
-class KeyboardRow(Dictionaryable):
-	def __init__(self):
-		self.keyboard = []
-
-	def add(self, button):
-		self.keyboard.append(button)
 
