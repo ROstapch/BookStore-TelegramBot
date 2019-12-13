@@ -124,6 +124,41 @@ class ResponseParsed:
 					+ str(publisher.get("notes")[:50]) + "...)\n") if publisher.get("notes") else "\n"
 
 
+	def item(self, id_on_page):
+		reply = "Couldn't find requested item"
+		if (self.ok and self.data and self.query_type == "Books"):
+			book = self.data[id_on_page]
+			book_id = book.get('id')
+			book_name = book.get('name')
+			book_cover = book.get('cover') if book.get('cover') else 'No cover image'
+			book_pages = str(book.get('pages')) if book.get('pages') else 'no info'
+			book_year = str(book.get('year')) if book.get('year') else 'no info'
+
+			book_authors = ''
+			authors = book.get('author')
+			for index, author in enumerate(authors):
+				temp_response = requests.get(url=author)
+				if (temp_response):
+					author_name = temp_response.json().get('name')
+					book_authors = book_authors + "%d. %s\n" % (index + 1, author_name)
+
+			book_publishers = ''
+			publishers = book.get('publisher')
+			for index, publisher in enumerate(publishers):
+				temp_response = requests.get(url=publisher)
+				if (temp_response):
+					publisher_name = temp_response.json().get('name')
+					book_publishers = book_publishers + "%d. %s\n" % (index + 1, publisher_name)
+
+			reply = "Book(id_%d):\n\nName: %s\n\nAuthor(s):\n%s\nPublisher(s):\n%s" % (book_id, book_name, book_authors, book_publishers) + \
+			 "\nPublished in %s year\n%s pages\n\nBook cover:\n%s" % (book_year, book_pages, book_cover)
+			return (reply)
+
+
+
+
+
+
 def get_page(page=1, query_type=None):
 	resp_parsed = None
 	if (query_type == "Books"):

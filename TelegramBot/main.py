@@ -52,6 +52,14 @@ def query_markup(response=None):
 		markup.row(*temp.keyboard)
 	return markup
 
+def item_markup():
+	markup = InlineKeyboardMarkup()
+	markup.row(
+		InlineKeyboardButton("Update", callback_data="update_item"),
+		InlineKeyboardButton("Close", callback_data="close"),
+		InlineKeyboardButton("Delete", callback_data="delete_item"))
+	return (markup)
+
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -59,26 +67,10 @@ def callback_query(call):
 		bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
 	else:
 		reply_call = CallbackHandle.query(call)
-		if call.data == "1":
-			pass
-		if call.data == "2":
-			pass
-		if call.data == "3":
-			pass
-		if call.data == "4":
-			pass
-		if call.data == "5":
-			pass
-		if call.data == "6":
-			pass
-		if call.data == "7":
-			pass
-		if call.data == "8":
-			pass
-		if call.data == "9":
-			pass
-		if call.data == "10":
-			pass
+		if call.data in ["1" , "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
+			resp_parsed = get_page(reply_call.current_page, reply_call.query_type)
+			reply = resp_parsed.item(int(call.data) - 1)
+			bot.send_message(call.message.chat.id, text=reply, reply_markup=item_markup())
 
 		elif call.data == "prev_page":
 			if(reply_call.prev_page):
