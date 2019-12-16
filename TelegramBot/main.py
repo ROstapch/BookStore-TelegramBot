@@ -95,14 +95,24 @@ def add_book(message):
 
 
 @bot.message_handler(commands=['add_author'])
-def add_book(message):
+def add_author(message):
 	pass
 
 
 @bot.message_handler(commands=['add_publisher'])
-def add_book(message):
-	pass
+def add_publisher(message):
 
+	def pub_notes(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		a = bot.send_message(message.chat.id, "New publisher created", reply_markup=markup)
 
+	def pub_name(message):
+		markup = types.ForceReply(selective=False)
+		a = bot.send_message(message.chat.id, "Send the publisher's notes", reply_markup=markup)
+		bot.register_for_reply_by_message_id(a.message_id, pub_notes)
+
+	markup = types.ForceReply(selective=False)
+	a = bot.send_message(message.chat.id, "Send the publisher's name", reply_markup=markup)
+	bot.register_for_reply_by_message_id(a.message_id, pub_name)
 
 bot.polling(none_stop = True)
