@@ -2,10 +2,12 @@ import telebot
 from telebot import types
 #from aiohttp import web
 #import ssl
+from datetime import datetime
 
 from bot_config import *
 from bookstore_api import *
 from markup import *
+from settings import MEDIA_ROOT
 
 
 bot = telebot.TeleBot(TOKEN)
@@ -96,7 +98,62 @@ def add_book(message):
 
 @bot.message_handler(commands=['add_author'])
 def add_author(message):
-	pass
+	authors_list = {}
+
+	def auth_photo(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		author = authors_list[message.chat.id]
+		if (message.content_type == "photo" and message.photo):
+			file_id = message.photo[0].file_id
+			file_info = bot.get_file(file_id)
+			photo = None
+			with requests.get('https://api.telegram.org/file/bot{0}/{1}'.format(TOKEN, file_info.file_path)) as resp:
+				if resp:
+					author.photo = MEDIA_ROOT + "%s-%s.jpg" % (message.chat.id, message.photo[0].file_id[:20])
+					with open(author.photo, "wb+") as f:
+						f.write(resp.content)
+		else:
+			author.photo = None
+		resp = Endpoints.post.author(author)
+		reply = "New author (%s) created\nYou can now find him in the list of all authors\n/authors" % author.name if resp \
+			else "Server error occured\nAuthor (%s) was not created\nTry again later" % author.name
+
+		bot.send_message(message.chat.id, reply, reply_markup=markup)
+
+	def auth_birth(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		if (message.content_type == "text"):
+			try:
+				birth = datetime.strptime(message.text, "%Y-%m-%d")
+				author = authors_list[message.chat.id]
+				author.birth = birth
+
+				msg = bot.send_message(message.chat.id, "Send the author's photo", reply_markup=markup)
+				bot.register_next_step_handler(msg, auth_photo)
+			except Exception:
+				msg = bot.send_message(message.chat.id, "Send the author's date of birth in correct format: yyyy-mm-dd", reply_markup=markup)
+				bot.register_next_step_handler(msg, auth_birth)
+		else:
+			bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
+
+
+
+	def auth_name(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		if (message.content_type == "text"):
+			name = message.text
+			author = Models.Author(name)
+			authors_list[message.chat.id] = author
+
+			msg = bot.send_message(message.chat.id, "Send the author's date of birth in next format: yyyy-mm-dd", reply_markup=markup)
+			bot.register_next_step_handler(msg, auth_birth)
+		else:
+			bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
+
+
+	markup = types.ReplyKeyboardRemove(selective=False)
+	msg = bot.send_message(message.chat.id, "Send the author's name", reply_markup=markup)
+	bot.register_next_step_handler(msg, auth_name)
 
 
 @bot.message_handler(commands=['add_publisher'])
@@ -104,27 +161,33 @@ def add_publisher(message):
 	publishers_list = {}
 
 	def pub_notes(message):
-		notes = message.text
-		publisher = publishers_list[message.chat.id]
-		publisher.notes = notes
-
-		resp = Endpoints.post.publisher(publisher)
-		reply = "New publisher (%s; %s) created\nYou can now find it in the list of all publishers\n/publishers" % (publisher.name, publisher.notes) if resp \
-			else "Server error occured\nPublisher (%s; %s) was not created\nTry again later" % (publisher.name, publisher.notes)
-
 		markup = types.ReplyKeyboardRemove(selective=False)
-		a = bot.send_message(message.chat.id, reply, reply_markup=markup)
+		if (message.content_type == "text"):		
+			notes = message.text
+			publisher = publishers_list[message.chat.id]
+			publisher.notes = notes
+
+			resp = Endpoints.post.publisher(publisher)
+			reply = "New publisher (%s; %s) created\nYou can now find it in the list of all publishers\n/publishers" % (publisher.name, publisher.notes) if resp \
+				else "Server error occured\nPublisher (%s; %s) was not created\nTry again later" % (publisher.name, publisher.notes)
+
+			a = bot.send_message(message.chat.id, reply, reply_markup=markup)
+		else:
+			bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
 
 	def pub_name(message):
-		name = message.text
-		publisher = Models.Publisher(name)
-		publishers_list[message.chat.id] = publisher
+		markup = types.ReplyKeyboardRemove(selective=False)
+		if (message.content_type == "text"):
+			name = message.text
+			publisher = Models.Publisher(name)
+			publishers_list[message.chat.id] = publisher
 
-		markup = types.ForceReply(selective=False)
-		msg = bot.send_message(message.chat.id, "Send the publisher's notes", reply_markup=markup)
-		bot.register_next_step_handler(msg, pub_notes)
+			msg = bot.send_message(message.chat.id, "Send the publisher's notes", reply_markup=markup)
+			bot.register_next_step_handler(msg, pub_notes)
+		else:
+			bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
 
-	markup = types.ForceReply(selective=False)
+	markup = types.ReplyKeyboardRemove(selective=False)
 	msg = bot.send_message(message.chat.id, "Send the publisher's name", reply_markup=markup)
 	bot.register_next_step_handler(msg, pub_name)
 

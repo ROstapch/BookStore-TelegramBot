@@ -1,5 +1,7 @@
 import requests
 import re
+import os
+from settings import MEDIA_ROOT
 
 
 
@@ -77,7 +79,15 @@ class Endpoints:
 		def author(author):
 			url = Endpoints.authors
 			try:
-				resp = requests.post(url = url, data = author.to_dic(), params={"type":"application/json"})
+				resp = None
+				if (author.photo):
+					resp = requests.post(url = url, params={"type":"multipart/form-data"},\
+						data = {"name":author.name, "date_of_birth":author.birth.strftime("%Y-%m-%d")}, \
+						 files={"photo": open(author.photo, 'rb')})
+					if (resp):
+						os.remove(author.photo)
+				else:
+					resp = requests.post(url = url, data = author.to_dic(), params={"type":"application/json"})
 				return (resp)
 			except Exception:
 				return None
@@ -139,8 +149,8 @@ class ResponseParsed:
 				self.current_page = self.prev_page + 1 if self.prev_page else 1
 				self.data = self.response.json().get('results')
 				func(self, *args, **kwargs)
-				return(self)
-			return(self)
+				return (self)
+			return (self)
 		return (wrapper)
 
 
@@ -248,12 +258,25 @@ class Models:
 
 		def to_dic(self):
 			publisher = {"name":self.name, "notes":self.notes}
-			return(publisher)
+			return (publisher)
 
 
 	class Author:
-		pass
 
+		def __init__(self, name):
+			self.name = name
+			self.birth = None
+			self.photo = None
+
+		def to_dic(self):
+			if (not self.photo):
+				author = {"name":self.name, "date_of_birth":self.birth}
+			else:
+				author = {"name":self.name, "photo":self.photo, "date_of_birth":self.birth}
+			return (author)
+
+		def photo(self):
+			return self.photo
 
 	class Book:
 		pass
