@@ -101,18 +101,34 @@ def add_author(message):
 
 @bot.message_handler(commands=['add_publisher'])
 def add_publisher(message):
+	publishers_list = {}
 
 	def pub_notes(message):
+		notes = message.text
+		publisher = publishers_list[message.chat.id]
+		publisher.notes = notes
+
+		resp = Endpoints.post.publisher(publisher)
+		reply = "New publisher (%s; %s) created\nYou can now find it in the list of all publishers\n/publishers" % (publisher.name, publisher.notes) if resp \
+			else "Server error occured\nPublisher (%s; %s) was not created\nTry again later" % (publisher.name, publisher.notes)
+
 		markup = types.ReplyKeyboardRemove(selective=False)
-		a = bot.send_message(message.chat.id, "New publisher created", reply_markup=markup)
+		a = bot.send_message(message.chat.id, reply, reply_markup=markup)
 
 	def pub_name(message):
+		name = message.text
+		publisher = Models.Publisher(name)
+		publishers_list[message.chat.id] = publisher
+
 		markup = types.ForceReply(selective=False)
-		a = bot.send_message(message.chat.id, "Send the publisher's notes", reply_markup=markup)
-		bot.register_for_reply_by_message_id(a.message_id, pub_notes)
+		msg = bot.send_message(message.chat.id, "Send the publisher's notes", reply_markup=markup)
+		bot.register_next_step_handler(msg, pub_notes)
 
 	markup = types.ForceReply(selective=False)
-	a = bot.send_message(message.chat.id, "Send the publisher's name", reply_markup=markup)
-	bot.register_for_reply_by_message_id(a.message_id, pub_name)
+	msg = bot.send_message(message.chat.id, "Send the publisher's name", reply_markup=markup)
+	bot.register_next_step_handler(msg, pub_name)
+
+
+
 
 bot.polling(none_stop = True)

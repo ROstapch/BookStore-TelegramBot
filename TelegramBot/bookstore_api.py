@@ -6,42 +6,90 @@ import re
 class Endpoints:
 
 	__home__ = "http://192.168.10.182:8000/"
+	books = __home__ + "api/books/"
 	books_page = __home__ + "api/books/?page="
+	authors = __home__ + "api/authors/"
 	authors_page = __home__ + "api/authors/?page="
+	publishers = __home__ + "api/publishers/"
 	publishers_page = __home__ + "api/publishers/?page="
 
 	class get:
 
 		def books(page=1):
 			url = Endpoints.books_page + str(page)
-			resp = requests.get(url=url)
-			return (resp)
+			try:
+				resp = requests.get(url=url)
+				return (resp)
+			except Exception:
+				return None
 		
 		def authors(page=1):
 			url = Endpoints.authors_page + str(page)
-			resp = requests.get(url=url)
-			return (resp)
+			try:
+				resp = requests.get(url=url)
+				return (resp)
+			except Exception:
+				return None
 
 		def publishers(page=1):
 			url = Endpoints.publishers_page + str(page)
-			resp = requests.get(url=url)
-			return (resp)
+			try:
+				resp = requests.get(url=url)
+				return (resp)
+			except Exception:
+				return None
 
 
 		def book_id(id=None):
 			url = Endpoints.__home__ + "api/books/" + str(page)
-			resp = requests.get(url=url)
-			return (resp)
+			try:
+				resp = requests.get(url=url)
+				return (resp)
+			except Exception:
+				return None
 		
 		def author_id(id=None):
 			url = Endpoints.__home__ + "api/authors/" + str(page)
-			resp = requests.get(url=url)
-			return (resp)
+			try:
+				resp = requests.get(url=url)
+				return (resp)
+			except Exception:
+				return None
 			
 		def publisher_id(id=None):
 			url = Endpoints.__home__ + "api/publishers/" + str(page)
-			resp = requests.get(url=url)
-			return (resp)
+			try:
+				resp = requests.get(url=url)
+				return (resp)
+			except Exception:
+				return None
+
+	class post:
+
+		def book(book):
+			url = Endpoints.books
+			try:
+				resp = requests.post(url = url, data = book.to_dic(), params={"type":"application/json"})
+				return (resp)
+			except Exception:
+				return None
+		
+		def author(author):
+			url = Endpoints.authors
+			try:
+				resp = requests.post(url = url, data = author.to_dic(), params={"type":"application/json"})
+				return (resp)
+			except Exception:
+				return None
+
+		def publisher(publisher):
+			url = Endpoints.publishers
+			try:
+				resp = requests.post(url = url, data = publisher.to_dic(), params={"type":"application/json"})
+				return (resp)
+			except Exception:
+				return None
+
 
 
 
@@ -188,3 +236,24 @@ def get_page(page=1, query_type=None):
 		resp_parsed = ResponseParsed(response=resp).publishers()
 	return (resp_parsed)
 
+
+
+class Models:
+
+	class Publisher:
+
+		def __init__(self, name):
+			self.name = name
+			self.notes = None
+
+		def to_dic(self):
+			publisher = {"name":self.name, "notes":self.notes}
+			return(publisher)
+
+
+	class Author:
+		pass
+
+
+	class Book:
+		pass
