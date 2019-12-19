@@ -71,7 +71,14 @@ class Endpoints:
 		def book(book):
 			url = Endpoints.books
 			try:
-				resp = requests.post(url = url, data = book.to_dic(), params={"type":"application/json"})
+				resp = None
+				if (book.cover):
+					resp = requests.post(url = url, params={"type":"multipart/form-data"},\
+						data = book.to_dic(), files={"photo": open(book.cover, 'rb')})
+					if (resp):
+						os.remove(book.cover)
+				else:
+					resp = requests.post(url = url, data = book.to_dic(), params={"type":"application/json"})
 				return (resp)
 			except Exception:
 				return None
@@ -82,8 +89,7 @@ class Endpoints:
 				resp = None
 				if (author.photo):
 					resp = requests.post(url = url, params={"type":"multipart/form-data"},\
-						data = {"name":author.name, "date_of_birth":author.birth.strftime("%Y-%m-%d")}, \
-						 files={"photo": open(author.photo, 'rb')})
+						data = author.to_dic(), files={"photo": open(author.photo, 'rb')})
 					if (resp):
 						os.remove(author.photo)
 				else:
@@ -269,14 +275,31 @@ class Models:
 			self.photo = None
 
 		def to_dic(self):
-			if (not self.photo):
-				author = {"name":self.name, "date_of_birth":self.birth}
+			if (self.photo):
+				author = {"name":self.name, "date_of_birth":self.birth.strftime("%Y-%m-%d")}
 			else:
-				author = {"name":self.name, "photo":self.photo, "date_of_birth":self.birth}
+				author = {"name":self.name, "photo":self.photo, "date_of_birth":self.birth.strftime("%Y-%m-%d")}
 			return (author)
 
-		def photo(self):
-			return self.photo
 
 	class Book:
-		pass
+
+		def __init__(self, name):
+			self.name = name
+			self.cover = None
+			self.pages = None
+			self.year = None
+			self.author = None
+			self.publisher = None
+
+		def to_dic(self):
+			if (self.cover):
+				book = {"name":self.name, "pages":self.pages, "year":self.year,\
+				"author": [Endpoints.authors + str(self.author) + '/',], \
+				"publisher": [Endpoints.publishers + str(self.publisher) + '/',]}
+			else:
+				book = {"name":self.name, "cover":self.cover, "pages":self.pages, "year":self.year,\
+				"author": [Endpoints.authors + str(self.author) + '/',], \
+				"publisher": [Endpoints.publishers + str(self.publisher) + '/',]}
+			return (book)
+

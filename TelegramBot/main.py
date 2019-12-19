@@ -58,7 +58,10 @@ def send_welcome(message):
 		"/help - to show this hint\n" +
 		"/books - get list of all books\n" + 
 		"/authors - get list of all authors\n" +
-		"/publishers - get list of all publishers\n", reply_markup=markup)
+		"/publishers - get list of all publishers\n" +
+		"/add_author - add new author\n" +
+		"/add_publisher - add new publisher"\
+		, reply_markup=markup)
 	
 
 @bot.message_handler(commands=['help'])
@@ -70,7 +73,10 @@ def send_help(message):
 		"/help - to show this hint\n" +
 		"/books - get list of all books\n" + 
 		"/authors - get list of all authors\n" +
-		"/publishers - get list of all publishers\n", reply_markup=markup)
+		"/publishers - get list of all publishers\n" +
+		"/add_author - add new author\n" +
+		"/add_publisher - add new publisher"\
+		, reply_markup=markup)
 
 
 @bot.message_handler(commands=['books'])
@@ -93,7 +99,110 @@ def list_books(message):
 
 @bot.message_handler(commands=['add_book'])
 def add_book(message):
-	pass
+	books_list = {}
+
+	def book_cover(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		book = books_list[message.chat.id]
+		if (message.content_type == "photo" and message.photo):
+			file_id = message.photo[0].file_id
+			file_info = bot.get_file(file_id)
+			cover = None
+			with requests.get('https://api.telegram.org/file/bot{0}/{1}'.format(TOKEN, file_info.file_path)) as resp:
+				if resp:
+					book.cover = MEDIA_ROOT + "%s-%s.jpg" % (message.chat.id, message.photo[0].file_id[:20])
+					with open(book.cover, "wb+") as f:
+						f.write(resp.content)
+		else:
+			book.cover = None
+		resp = Endpoints.post.book(book)
+		reply = "New book (%s) created\nYou can now find it in the list of all books\n/books" % book.name if resp \
+			else "Server error occured\nBook (%s) was not created\nTry again later" % book.name
+
+		bot.send_message(message.chat.id, reply, reply_markup=markup)
+
+	def book_publisher(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		if (message.content_type == "text"):
+			try:
+				publisher = int(message.text)
+				book = books_list[message.chat.id]
+				book.publisher = publisher
+
+				msg = bot.send_message(message.chat.id, "Send the book's cover image", reply_markup=markup)
+				bot.register_next_step_handler(msg, book_cover)
+			except Exception:
+				msg = bot.send_message(message.chat.id, "Send the book's publisher id in form of a number", reply_markup=markup)
+				bot.register_next_step_handler(msg, book_publisher)
+		else:
+			bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
+
+	def book_author(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		if (message.content_type == "text"):
+			try:
+				author = int(message.text)
+				book = books_list[message.chat.id]
+				book.author = author
+
+				msg = bot.send_message(message.chat.id, "Send the book's publisher id", reply_markup=markup)
+				bot.register_next_step_handler(msg, book_publisher)
+			except Exception:
+				msg = bot.send_message(message.chat.id, "Send the book's author id in form of a number", reply_markup=markup)
+				bot.register_next_step_handler(msg, book_author)
+		else:
+			bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
+
+	def book_pages(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		if (message.content_type == "text"):
+			try:
+				pages = int(message.text)
+				book = books_list[message.chat.id]
+				book.pages = pages
+
+				msg = bot.send_message(message.chat.id, "Send the book's author id", reply_markup=markup)
+				bot.register_next_step_handler(msg, book_author)
+			except Exception:
+				msg = bot.send_message(message.chat.id, "Send the book's amount of pages in form of a number", reply_markup=markup)
+				bot.register_next_step_handler(msg, book_pages)
+		else:
+			bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
+
+	def book_year(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		if (message.content_type == "text"):
+			try:
+				year = int(message.text)
+				book = books_list[message.chat.id]
+				book.year = year
+
+				msg = bot.send_message(message.chat.id, "Send the book's amount of pages", reply_markup=markup)
+				bot.register_next_step_handler(msg, book_pages)
+			except Exception:
+				msg = bot.send_message(message.chat.id, "Send the book's publish year in correct format of year", reply_markup=markup)
+				bot.register_next_step_handler(msg, book_year)
+		else:
+			bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
+
+
+
+	def book_name(message):
+		markup = types.ReplyKeyboardRemove(selective=False)
+		if (message.content_type == "text"):
+			name = message.text
+			book = Models.Book(name)
+			books_list[message.chat.id] = book
+
+			msg = bot.send_message(message.chat.id, "Send the book's publish year", reply_markup=markup)
+			bot.register_next_step_handler(msg, book_year)
+		else:
+			bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
+
+
+	markup = types.ReplyKeyboardRemove(selective=False)
+	msg = bot.send_message(message.chat.id, "Send the book's name", reply_markup=markup)
+	bot.register_next_step_handler(msg, book_name)
 
 
 @bot.message_handler(commands=['add_author'])
