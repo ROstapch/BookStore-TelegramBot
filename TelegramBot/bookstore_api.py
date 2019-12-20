@@ -42,8 +42,8 @@ class Endpoints:
 				return None
 
 
-		def book_id(id=None):
-			url = Endpoints.__home__ + "api/books/" + str(page)
+		def book_id(item_id=None):
+			url = Endpoints.__home__ + "api/books/" + str(item_id)
 			try:
 				resp = requests.get(url=url)
 				return (resp)
@@ -51,7 +51,7 @@ class Endpoints:
 				return None
 		
 		def author_id(id=None):
-			url = Endpoints.__home__ + "api/authors/" + str(page)
+			url = Endpoints.__home__ + "api/authors/" + str(item_id)
 			try:
 				resp = requests.get(url=url)
 				return (resp)
@@ -59,7 +59,7 @@ class Endpoints:
 				return None
 			
 		def publisher_id(id=None):
-			url = Endpoints.__home__ + "api/publishers/" + str(page)
+			url = Endpoints.__home__ + "api/publishers/" + str(item_id)
 			try:
 				resp = requests.get(url=url)
 				return (resp)
@@ -106,6 +106,47 @@ class Endpoints:
 			except Exception:
 				return None
 
+	class delete:
+
+		def item_by_url(url):
+			try:
+				resp = requests.delete(url=url)
+				return (resp)
+			except Exception:
+				return None
+
+		def book_id(item_id=None):
+			url = Endpoints.__home__ + "api/books/" + str(item_id)
+			try:
+				resp = requests.delete(url=url)
+				return (resp)
+			except Exception:
+				return None
+		
+		def author_id(id=None):
+			url = Endpoints.__home__ + "api/authors/" + str(item_id)
+			try:
+				resp = requests.delete(url=url)
+				return (resp)
+			except Exception:
+				return None
+			
+		def publisher_id(id=None):
+			url = Endpoints.__home__ + "api/publishers/" + str(item_id)
+			try:
+				resp = requests.delete(url=url)
+				return (resp)
+			except Exception:
+				return None
+
+	class patch:
+
+		def patch_name(url, name):
+			try:
+				resp = requests.patch(url=url, params={"type":"application/json"}, data={"name":name})
+				return (resp)
+			except Exception:
+				return None
 
 
 
@@ -130,6 +171,20 @@ class CallbackHandle:
 			resp = Endpoints.get.publishers(page=page)
 			resp_parsed = ResponseParsed(response=resp).publishers()
 			return (resp_parsed)
+
+	def item_url(call):
+		message = call.message.text
+		if (re.search(r'Book\(id_\d+\)', message)):
+			item_id = re.search(r'Book\(id_\d+\)', message).group()[8:-1]
+			return (Endpoints.books + item_id + '/')
+
+		elif (re.search(r'Author\(id_\d+\)', message)):
+			item_id = re.search(r'Author\(id_\d+\)', message).group()[10:-1]
+			return (Endpoints.authors + item_id + '/')
+
+		elif (re.search(r'Publisher\(id_\d+\)', message)):
+			item_id = re.search(r'Publisher\(id_\d+\)', message).group()[13:-1]
+			return (Endpoints.publishers + item_id + '/')
 
 
 
@@ -190,7 +245,7 @@ class ResponseParsed:
 					+ str(publisher.get("notes")[:20]) + "...)\n") if publisher.get("notes") else "\n"
 
 
-	def item(self, id_on_page):
+	def item_on_page(self, id_on_page):
 		reply = "Couldn't find requested item"
 		if (self.ok and self.data and self.query_type == "Books"):
 			book = self.data[id_on_page]
@@ -234,7 +289,7 @@ class ResponseParsed:
 			publisher_name = publisher.get('name')
 			publisher_notes = publisher.get('notes') if publisher.get('notes') else 'No notes'
 
-			reply = "Author(id_%d):\n\nName: %s\nNotes: %s" % (publisher_id, publisher_name, publisher_notes)
+			reply = "Publisher(id_%d):\n\nName: %s\nNotes: %s" % (publisher_id, publisher_name, publisher_notes)
 		return (reply)
 
 

@@ -22,7 +22,7 @@ def callback_query(call):
 	elif call.data in ["1" , "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
 		reply_call = CallbackHandle.query(call)
 		resp_parsed = get_page(reply_call.current_page, reply_call.query_type)
-		reply = resp_parsed.item(int(call.data) - 1)
+		reply = resp_parsed.item_on_page(int(call.data) - 1)
 		bot.send_message(call.message.chat.id, text=reply, reply_markup=item_markup())
 
 	elif call.data == "prev_page":
@@ -41,11 +41,34 @@ def callback_query(call):
 				message_id=call.message.message_id, inline_message_id=call.inline_message_id,
 				reply_markup=query_markup(resp_parsed))
 
+
 	elif call.data == "update_item":
-		pass
+		markup = types.ReplyKeyboardRemove(selective=False)
+		item = CallbackHandle.item_url(call)
+
+		def new_name(message):
+			if (message.content_type == "text"):
+				name = message.text
+				resp = Endpoints.patch.patch_name(item, name)
+				if resp:
+					bot.send_message(message.chat.id, "Name changed succesfully", reply_markup=markup)
+				else:
+					bot.send_message(message.chat.id, "Server error occured\nCouldn't update selected item's name", reply_markup=markup)
+
+			else:
+				bot.send_message(message.chat.id, "Text format required", reply_markup=markup)
+
+		msg = bot.send_message(call.message.chat.id, "Send the new name for this item", reply_markup=markup)
+		bot.register_next_step_handler(msg, new_name)
+
 
 	elif call.data == "delete_item":
-		pass
+		markup = types.ReplyKeyboardRemove(selective=False)
+		item = CallbackHandle.item_url(call)
+		resp = Endpoints.delete.item_by_url(item)
+		reply = "Item deleted succesfully" if resp else "Server error occured\nCouldn't delete selected item"
+		bot.send_message(call.message.chat.id, reply, reply_markup=markup)
+
 
 
 
